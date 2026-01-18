@@ -1,10 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 /**
  * Instagram Auto-Posting Function
  * 
@@ -17,7 +12,15 @@ const supabase = createClient(
  * 3. External cron service hitting /api/cron/publish
  */
 
+function getSupabaseClient() {
+    return createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+}
+
 export async function publishScheduledPosts() {
+    const supabase = getSupabaseClient()
     try {
         // Get posts that are scheduled for now or earlier
         const now = new Date().toISOString()
