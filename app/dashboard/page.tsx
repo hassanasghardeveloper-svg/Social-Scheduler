@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { LayoutDashboard, FileText, Calendar as CalendarIcon, Settings, Instagram } from 'lucide-react'
 import Link from 'next/link'
+import ConnectInstagramButton from '@/components/ConnectInstagramButton'
 
 export default async function DashboardPage() {
     const supabase = await createClient()
@@ -144,17 +145,15 @@ export default async function DashboardPage() {
                             </p>
                         </Link>
 
-                        <Link
-                            href="/settings"
-                            className="bg-white dark:bg-gray-950 rounded-lg border border-gray-200 dark:border-gray-800 p-6 hover:border-blue-500 dark:hover:border-blue-500 transition-colors"
-                        >
+                        <div className="bg-white dark:bg-gray-950 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                                 Connect Instagram
                             </h3>
-                            <p className="text-gray-600 dark:text-gray-400 text-sm">
+                            <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
                                 Link your Instagram account to start auto-posting
                             </p>
-                        </Link>
+                            {workspace && <ConnectInstagramButton workspaceId={workspace.id} />}
+                        </div>
                     </div>
 
                     {/* Recent Posts */}
@@ -178,9 +177,9 @@ export default async function DashboardPage() {
                                             </p>
                                         </div>
                                         <span className={`px-3 py-1 text-xs font-medium rounded-full ${post.status === 'published' ? 'bg-green-100 dark:bg-green-900/20 text-green-600' :
-                                                post.status === 'scheduled' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-600' :
-                                                    post.status === 'failed' ? 'bg-red-100 dark:bg-red-900/20 text-red-600' :
-                                                        'bg-gray-100 dark:bg-gray-800 text-gray-600'
+                                            post.status === 'scheduled' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-600' :
+                                                post.status === 'failed' ? 'bg-red-100 dark:bg-red-900/20 text-red-600' :
+                                                    'bg-gray-100 dark:bg-gray-800 text-gray-600'
                                             }`}>
                                             {post.status}
                                         </span>
