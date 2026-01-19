@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import ComposerForm from '@/components/ComposerForm'
+import DashboardLayout from '@/components/DashboardLayout'
 
 export default async function ComposerPage() {
     const supabase = await createClient()
@@ -32,9 +33,9 @@ export default async function ComposerPage() {
         .eq('is_active', true)
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <div className="container mx-auto px-4 py-8 max-w-6xl">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
+        <DashboardLayout currentPage="composer">
+            <div className="max-w-6xl mx-auto">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6 sm:mb-8">
                     Create Post
                 </h1>
 
@@ -44,7 +45,7 @@ export default async function ComposerPage() {
                         socialAccounts={socialAccounts}
                     />
                 ) : (
-                    <div className="bg-white dark:bg-gray-950 rounded-lg border border-gray-200 dark:border-gray-800 p-12 text-center">
+                    <div className="bg-white dark:bg-gray-950 rounded-lg border border-gray-200 dark:border-gray-800 p-8 sm:p-12 text-center">
                         <div className="text-4xl mb-4">🔌</div>
                         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                             No Social Accounts Connected
@@ -61,6 +62,6 @@ export default async function ComposerPage() {
                     </div>
                 )}
             </div>
-        </div>
+        </DashboardLayout>
     )
 }

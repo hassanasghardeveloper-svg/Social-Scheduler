@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import CalendarView from '@/components/CalendarView'
+import DashboardLayout from '@/components/DashboardLayout'
+import Link from 'next/link'
 
 export default async function CalendarPage() {
     const supabase = await createClient()
@@ -33,22 +35,22 @@ export default async function CalendarPage() {
         .order('scheduled_at', { ascending: true })
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <div className="container mx-auto px-4 py-8 max-w-7xl">
-                <div className="flex items-center justify-between mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+        <DashboardLayout currentPage="calendar">
+            <div className="max-w-7xl mx-auto">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                         Calendar
                     </h1>
-                    <a
+                    <Link
                         href="/composer"
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-center"
                     >
                         Create Post
-                    </a>
+                    </Link>
                 </div>
 
                 <CalendarView posts={posts || []} />
             </div>
-        </div>
+        </DashboardLayout>
     )
 }

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import ConnectInstagramButton from '@/components/ConnectInstagramButton'
 import ConnectedAccounts from '@/components/ConnectedAccounts'
+import DashboardLayout from '@/components/DashboardLayout'
 
 export default async function SettingsPage() {
     const supabase = await createClient()
@@ -40,45 +41,47 @@ export default async function SettingsPage() {
         .eq('is_active', true)
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <div className="container mx-auto px-4 py-8 max-w-4xl">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
+        <DashboardLayout currentPage="settings">
+            <div className="max-w-4xl mx-auto">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6 sm:mb-8">
                     Settings
                 </h1>
 
                 {/* Workspace Info */}
-                <section className="bg-white dark:bg-gray-950 rounded-lg border border-gray-200 dark:border-gray-800 p-6 mb-6">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                <section className="bg-white dark:bg-gray-950 rounded-lg border border-gray-200 dark:border-gray-800 p-4 sm:p-6 mb-6">
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4">
                         Workspace
                     </h2>
                     <div className="space-y-2">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                             <span className="font-medium">Name:</span> {currentWorkspace?.name || 'Default Workspace'}
                         </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                             <span className="font-medium">Owner:</span> {user.email}
                         </p>
                     </div>
                 </section>
 
                 {/* Connected Accounts */}
-                <section className="bg-white dark:bg-gray-950 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
-                    <div className="flex items-center justify-between mb-6">
+                <section className="bg-white dark:bg-gray-950 rounded-lg border border-gray-200 dark:border-gray-800 p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                         <div>
-                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
                                 Connected Accounts
                             </h2>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                                 Connect your Instagram account to start posting
                             </p>
                         </div>
-                        <ConnectInstagramButton workspaceId={currentWorkspace?.id || 'default'} />
+                        <div className="self-start sm:self-auto">
+                            <ConnectInstagramButton workspaceId={currentWorkspace?.id || 'default'} />
+                        </div>
                     </div>
 
                     {socialAccounts && socialAccounts.length > 0 ? (
                         <ConnectedAccounts accounts={socialAccounts} />
                     ) : (
-                        <div className="text-center py-12 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-lg">
+                        <div className="text-center py-8 sm:py-12 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-lg">
                             <div className="text-4xl mb-4">📱</div>
                             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                                 No accounts connected yet
@@ -90,6 +93,6 @@ export default async function SettingsPage() {
                     )}
                 </section>
             </div>
-        </div>
+        </DashboardLayout>
     )
 }
