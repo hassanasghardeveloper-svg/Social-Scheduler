@@ -118,6 +118,16 @@ export async function publishScheduledPosts() {
 
 async function publishToInstagram(post: any, accessToken: string) {
     try {
+        // Simulation Mode Check
+        if (accessToken === 'demo_token_simulator') {
+            console.log('🚀 SIMULATION MODE: Publishing post...')
+            await new Promise(resolve => setTimeout(resolve, 2000)) // Simulate network delay
+            return {
+                success: true,
+                postId: `ig_demo_${Math.random().toString(36).substring(7)}`,
+            }
+        }
+
         const igUserId = post.social_accounts.account_id
         const caption = post.caption
         const mediaUrl = post.media_assets?.url

@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import ConnectInstagramButton from '@/components/ConnectInstagramButton'
+import DemoAccountButton from '@/components/DemoAccountButton'
 import ConnectedAccounts from '@/components/ConnectedAccounts'
 import DashboardLayout from '@/components/DashboardLayout'
 import { AlertCircle, CheckCircle2 } from 'lucide-react'
@@ -103,7 +104,8 @@ export default async function SettingsPage({
                                 Connect your Instagram account to start posting
                             </p>
                         </div>
-                        <div className="self-start sm:self-auto">
+                        <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
+                            <DemoAccountButton workspaceId={currentWorkspace?.id || 'default'} />
                             <ConnectInstagramButton workspaceId={currentWorkspace?.id || 'default'} />
                         </div>
                     </div>
