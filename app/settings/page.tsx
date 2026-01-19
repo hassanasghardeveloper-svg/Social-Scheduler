@@ -15,7 +15,7 @@ export default async function SettingsPage() {
     const { data: workspaces } = await supabase
         .from('workspaces')
         .select('*')
-        .or(`owner_id.eq.${user.id},id.in.(select workspace_id from workspace_members where user_id = '${user.id}')`)
+        .eq('owner_id', user.id)
         .order('created_at', { ascending: false })
 
     const currentWorkspace = workspaces?.[0]
