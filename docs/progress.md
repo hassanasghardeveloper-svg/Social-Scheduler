@@ -11,8 +11,8 @@ This document tracks the completion of features and milestones for the Social Me
 | **PLANNING** | Project Architecture | ✅ Done | 2026-01-18 | Instagram-first strategy finalized |
 | **Phase 1** | Foundation Setup | ✅ Done | 2026-01-18 | Next.js + Supabase + Tailwind + SEO |
 | **Phase 2** | Landing & Auth | ✅ Done | 2026-01-18 | Header, Footer, Auth pages complete |
-| **Phase 3** | Instagram OAuth | 🟡 In Progress | - | Meta App Created & Configured |
-| **Phase 4** | AI Composer | ⚪ Pending | - | Upload + AI generation |
+| **Phase 3** | Instagram OAuth | ✅ Done | 2026-01-19 | Account successfully connected |
+| **Phase 4** | AI Composer | 🟡 In Progress | - | Planning media upload & AI flow |
 | **Phase 5** | Scheduling UI | ⚪ Pending | - | Calendar + date picker |
 | **Phase 6** | Auto-Posting Engine | ⚪ Pending | - | Edge Functions + Instagram API |
 | **Phase 7** | Dashboard & Polish | ⚪ Pending | - | Final UI refinements |
