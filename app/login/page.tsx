@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { ArrowLeft } from 'lucide-react'
 
 export default function LoginPage() {
     const router = useRouter()
@@ -36,7 +37,14 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center px-4">
+        <div className="min-h-screen bg-white dark:bg-gray-950 flex flex-col items-center justify-center px-4 relative">
+            <Link
+                href="/"
+                className="absolute top-8 left-8 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+                <ArrowLeft size={16} />
+                Back to home
+            </Link>
             <div className="max-w-md w-full space-y-8">
                 {/* Logo */}
                 <div className="text-center">
