@@ -18,21 +18,37 @@ export async function POST(request: NextRequest) {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-        const { data: workspace } = await supabase
+        // Get user's workspace (create if doesn't exist)
+        let { data: workspace } = await supabase
             .from('workspaces')
             .select('id')
-            .eq('id', workspaceId)
             .eq('owner_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
             .single()
 
+        // If no workspace exists, create one
+        if (!workspace) {
+            const { data: newWorkspace, error: wsError } = await supabase
+                .from('workspaces')
+                .insert({ name: 'Default Workspace', owner_id: user.id })
+                .select()
+                .single()
+
+            if (wsError) return NextResponse.json({ error: 'Failed to create workspace' }, { status: 500 })
+            workspace = newWorkspace
+        }
+
         if (!workspace) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+
+        const actualWorkspaceId = workspace.id
 
         // Create Demo Account
         const demoId = `demo_${Math.random().toString(36).substring(7)}`
         const { data: account, error: accountError } = await supabase
             .from('social_accounts')
             .insert({
-                workspace_id: workspaceId,
+                workspace_id: actualWorkspaceId,
                 platform: 'instagram',
                 account_name: 'Demo Account (Simulator)',
                 account_id: demoId,
