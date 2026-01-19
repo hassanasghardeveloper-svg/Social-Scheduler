@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { LayoutDashboard, FileText, Calendar as CalendarIcon, Settings, Menu, X } from 'lucide-react'
+import { LayoutDashboard, FileText, Calendar as CalendarIcon, Settings, Menu, X, LogOut } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
 
 interface DashboardLayoutProps {
     children: React.ReactNode
@@ -18,6 +20,14 @@ const navItems = [
 
 export default function DashboardLayout({ children, currentPage }: DashboardLayoutProps) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+    const router = useRouter()
+    const supabase = createClient()
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut()
+        router.push('/login')
+        router.refresh()
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -53,6 +63,7 @@ export default function DashboardLayout({ children, currentPage }: DashboardLayo
             {/* Side Navigation - Desktop always visible, Mobile slides in */}
             <aside className={`
                 fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 p-6 z-50
+                flex flex-col
                 transform transition-transform duration-300 ease-in-out
                 lg:translate-x-0
                 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -84,6 +95,16 @@ export default function DashboardLayout({ children, currentPage }: DashboardLayo
                         )
                     })}
                 </nav>
+
+                <div className="mt-auto pt-6 border-t border-gray-200 dark:border-gray-800">
+                    <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 px-3 py-2 w-full text-left text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors"
+                    >
+                        <LogOut size={20} />
+                        Logout
+                    </button>
+                </div>
             </aside>
 
             {/* Main Content */}
