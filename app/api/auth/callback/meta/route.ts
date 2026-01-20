@@ -16,11 +16,16 @@ export async function GET(request: NextRequest) {
     }
 
     try {
+        console.log('OAuth Callback Started');
+        console.log('Code present:', !!code);
+        console.log('State present:', !!state);
+
         let decodedState;
         try {
             decodedState = JSON.parse(atob(state))
+            console.log('Decoded state:', decodedState);
         } catch (e) {
-            console.error('Failed to decode state:', state)
+            console.error('Failed to decode state:', state, e)
             return NextResponse.redirect(new URL('/settings?error=invalid_state', request.url))
         }
 
@@ -29,9 +34,13 @@ export async function GET(request: NextRequest) {
 
         // Exchange code for access_token
         const redirectUri = `${request.nextUrl.origin}/api/auth/callback/meta`
+        console.log('Redirect URI used:', redirectUri);
 
         if (!process.env.META_APP_ID || !process.env.META_APP_SECRET) {
-            console.error('Missing Meta App credentials in environment variables')
+            console.error('Missing Meta App credentials:', {
+                hasId: !!process.env.META_APP_ID,
+                hasSecret: !!process.env.META_APP_SECRET
+            })
             return NextResponse.redirect(new URL('/settings?error=config_error', request.url))
         }
 
@@ -41,12 +50,14 @@ export async function GET(request: NextRequest) {
         tokenUrl.searchParams.set('redirect_uri', redirectUri)
         tokenUrl.searchParams.set('code', code)
 
+        console.log('Fetching access token...');
         const tokenResponse = await fetch(tokenUrl.toString())
         const tokenData = await tokenResponse.json()
+        console.log('Token response status:', tokenResponse.status);
 
         if (!tokenResponse.ok || !tokenData.access_token) {
-            console.error('Token exchange failed:', tokenData)
-            throw new Error(tokenData.error?.message || 'No access token received')
+            console.error('Token exchange failed data:', tokenData)
+            throw new Error(tokenData.error?.message || `Token exchange failed with status ${tokenResponse.status}`)
         }
 
         const accessToken = tokenData.access_token
@@ -154,7 +165,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.redirect(new URL('/settings?success=connected', request.url))
         }
     } catch (error) {
-        console.error('OAuth callback error:', error)
+        console.error('CRITICAL OAuth callback error:', error)
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
         return NextResponse.redirect(new URL(`/settings?error=connection_failed&details=${encodeURIComponent(errorMessage)}`, request.url))
     }
