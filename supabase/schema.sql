@@ -125,11 +125,8 @@ CREATE POLICY "Users can view workspace members"
 CREATE POLICY "Workspace admins can manage members"
     ON workspace_members FOR ALL
     USING (
-        workspace_id IN (
-            SELECT id FROM workspaces WHERE owner_id = auth.uid()
-            UNION
-            SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid() AND role = 'admin'
-        )
+        workspace_id IN (SELECT id FROM workspaces WHERE owner_id = auth.uid()) OR
+        workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid() AND role = 'admin')
     );
 
 -- Social Accounts Policies
@@ -151,21 +148,15 @@ CREATE POLICY "Workspace admins can manage social accounts"
 CREATE POLICY "Users can view media in their workspaces"
     ON media_assets FOR SELECT
     USING (
-        workspace_id IN (
-            SELECT id FROM workspaces WHERE owner_id = auth.uid()
-            UNION
-            SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()
-        )
+        workspace_id IN (SELECT id FROM workspaces WHERE owner_id = auth.uid()) OR
+        workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid())
     );
 
 CREATE POLICY "Users can create media in their workspaces"
     ON media_assets FOR INSERT
     WITH CHECK (
-        workspace_id IN (
-            SELECT id FROM workspaces WHERE owner_id = auth.uid()
-            UNION
-            SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid() AND role IN ('admin', 'editor')
-        )
+        workspace_id IN (SELECT id FROM workspaces WHERE owner_id = auth.uid()) OR
+        workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid() AND role IN ('admin', 'editor'))
     );
 
 -- AI Generations Policies
@@ -173,11 +164,9 @@ CREATE POLICY "Users can view AI generations for their media"
     ON ai_generations FOR SELECT
     USING (
         media_id IN (
-            SELECT id FROM media_assets WHERE workspace_id IN (
-                SELECT id FROM workspaces WHERE owner_id = auth.uid()
-                UNION
-                SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()
-            )
+            SELECT id FROM media_assets WHERE 
+            workspace_id IN (SELECT id FROM workspaces WHERE owner_id = auth.uid()) OR
+            workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid())
         )
     );
 
@@ -189,31 +178,22 @@ CREATE POLICY "Users can create AI generations"
 CREATE POLICY "Users can view posts in their workspaces"
     ON posts FOR SELECT
     USING (
-        workspace_id IN (
-            SELECT id FROM workspaces WHERE owner_id = auth.uid()
-            UNION
-            SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()
-        )
+        workspace_id IN (SELECT id FROM workspaces WHERE owner_id = auth.uid()) OR
+        workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid())
     );
 
 CREATE POLICY "Users can create posts in their workspaces"
     ON posts FOR INSERT
     WITH CHECK (
-        workspace_id IN (
-            SELECT id FROM workspaces WHERE owner_id = auth.uid()
-            UNION
-            SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid() AND role IN ('admin', 'editor')
-        )
+        workspace_id IN (SELECT id FROM workspaces WHERE owner_id = auth.uid()) OR
+        workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid() AND role IN ('admin', 'editor'))
     );
 
 CREATE POLICY "Users can update posts in their workspaces"
     ON posts FOR UPDATE
     USING (
-        workspace_id IN (
-            SELECT id FROM workspaces WHERE owner_id = auth.uid()
-            UNION
-            SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid() AND role IN ('admin', 'editor')
-        )
+        workspace_id IN (SELECT id FROM workspaces WHERE owner_id = auth.uid()) OR
+        workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid() AND role IN ('admin', 'editor'))
     );
 
 -- Post Logs Policies
@@ -221,11 +201,9 @@ CREATE POLICY "Users can view post logs"
     ON post_logs FOR SELECT
     USING (
         post_id IN (
-            SELECT id FROM posts WHERE workspace_id IN (
-                SELECT id FROM workspaces WHERE owner_id = auth.uid()
-                UNION
-                SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()
-            )
+            SELECT id FROM posts WHERE 
+            workspace_id IN (SELECT id FROM workspaces WHERE owner_id = auth.uid()) OR
+            workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid())
         )
     );
 
