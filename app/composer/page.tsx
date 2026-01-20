@@ -12,14 +12,27 @@ export default async function ComposerPage() {
     }
 
     // Get user's workspace
-    const { data: workspaces } = await supabase
+    let { data: workspaces } = await supabase
         .from('workspaces')
         .select('*')
-        .or(`owner_id.eq.${user.id},id.in.(select workspace_id from workspace_members where user_id = '${user.id}')`)
+        .eq('owner_id', user.id)
         .order('created_at', { ascending: false })
         .limit(1)
 
-    const workspace = workspaces?.[0]
+    let workspace = workspaces?.[0]
+
+    // Create workspace if none exists
+    if (!workspace) {
+        const { data: newWorkspace } = await supabase
+            .from('workspaces')
+            .insert({
+                name: 'Default Workspace',
+                owner_id: user.id
+            })
+            .select()
+            .single()
+        workspace = newWorkspace
+    }
 
     if (!workspace) {
         redirect('/dashboard')

@@ -8,10 +8,17 @@ import { createClient } from '@/lib/supabase/server'
 export async function POST(request: NextRequest) {
     try {
         const supabase = await createClient()
-        const { workspaceId } = await request.json()
 
-        if (!workspaceId) {
-            return NextResponse.json({ error: 'Missing workspaceId' }, { status: 400 })
+        // Safely parse request body
+        let workspaceId: string | undefined
+        try {
+            const body = await request.text()
+            if (body) {
+                const parsed = JSON.parse(body)
+                workspaceId = parsed.workspaceId
+            }
+        } catch {
+            // Body parsing failed, we'll try to get workspace from user
         }
 
         // Verify ownership

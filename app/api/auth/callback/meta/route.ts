@@ -16,7 +16,8 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        const { workspaceId } = JSON.parse(atob(state))
+        const { workspaceId, platform } = JSON.parse(atob(state))
+        const targetPlatform = platform || 'instagram' // Default to instagram for backward compatibility
 
         // Exchange code for access_token
         const redirectUri = `${request.nextUrl.origin}/api/auth/callback/meta`
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
         const longLivedData = await longLivedResponse.json()
         const accessToken = longLivedData.access_token || tokenData.access_token
 
-        // Get user's Instagram Business Account
+        // Get user's Facebook Pages
         const accountsResponse = await fetch(
             `https://graph.facebook.com/v21.0/me/accounts?access_token=${accessToken}`
         )
@@ -57,48 +58,79 @@ export async function GET(request: NextRequest) {
             return NextResponse.redirect(new URL('/settings?error=no_pages', request.url))
         }
 
-        // Get Instagram account for the first page
-        const pageId = accountsData.data[0].id
-        const pageAccessToken = accountsData.data[0].access_token
-
-        const igResponse = await fetch(
-            `https://graph.facebook.com/v21.0/${pageId}?fields=instagram_business_account&access_token=${pageAccessToken}`
-        )
-
-        const igData = await igResponse.json()
-
-        if (!igData.instagram_business_account) {
-            return NextResponse.redirect(new URL('/settings?error=no_instagram', request.url))
-        }
-
-        const igBusinessId = igData.instagram_business_account.id
-
-        // Get Instagram account details
-        const igDetailsResponse = await fetch(
-            `https://graph.facebook.com/v21.0/${igBusinessId}?fields=username,profile_picture_url&access_token=${pageAccessToken}`
-        )
-
-        const igDetails = await igDetailsResponse.json()
+        // Get the first page's details
+        const page = accountsData.data[0]
+        const pageId = page.id
+        const pageAccessToken = page.access_token
+        const pageName = page.name
 
         const supabase = await createClient()
 
-        // Store the account
-        const { error: dbError } = await supabase.from('social_accounts').upsert({
-            workspace_id: workspaceId,
-            platform: 'instagram',
-            account_id: igBusinessId,
-            account_name: igDetails.username,
-            profile_picture_url: igDetails.profile_picture_url,
-            access_token: pageAccessToken, // Store encrypted in production
-            token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days
-            is_active: true,
-        }, {
-            onConflict: 'workspace_id,account_id'
-        })
+        if (targetPlatform === 'facebook') {
+            // Connect Facebook Page directly
+            // Get page profile picture
+            const pageDetailsResponse = await fetch(
+                `https://graph.facebook.com/v21.0/${pageId}?fields=picture&access_token=${pageAccessToken}`
+            )
+            const pageDetails = await pageDetailsResponse.json()
+            const profilePictureUrl = pageDetails.picture?.data?.url || null
 
-        if (dbError) throw dbError
+            // Store the Facebook Page account
+            const { error: dbError } = await supabase.from('social_accounts').upsert({
+                workspace_id: workspaceId,
+                platform: 'facebook',
+                account_id: pageId,
+                account_name: pageName,
+                profile_picture_url: profilePictureUrl,
+                access_token: pageAccessToken, // Store encrypted in production
+                token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days
+                is_active: true,
+            }, {
+                onConflict: 'workspace_id,account_id'
+            })
 
-        return NextResponse.redirect(new URL('/settings?success=connected', request.url))
+            if (dbError) throw dbError
+
+            return NextResponse.redirect(new URL('/settings?success=connected', request.url))
+        } else {
+            // Connect Instagram account (original logic)
+            const igResponse = await fetch(
+                `https://graph.facebook.com/v21.0/${pageId}?fields=instagram_business_account&access_token=${pageAccessToken}`
+            )
+
+            const igData = await igResponse.json()
+
+            if (!igData.instagram_business_account) {
+                return NextResponse.redirect(new URL('/settings?error=no_instagram', request.url))
+            }
+
+            const igBusinessId = igData.instagram_business_account.id
+
+            // Get Instagram account details
+            const igDetailsResponse = await fetch(
+                `https://graph.facebook.com/v21.0/${igBusinessId}?fields=username,profile_picture_url&access_token=${pageAccessToken}`
+            )
+
+            const igDetails = await igDetailsResponse.json()
+
+            // Store the account
+            const { error: dbError } = await supabase.from('social_accounts').upsert({
+                workspace_id: workspaceId,
+                platform: 'instagram',
+                account_id: igBusinessId,
+                account_name: igDetails.username,
+                profile_picture_url: igDetails.profile_picture_url,
+                access_token: pageAccessToken, // Store encrypted in production
+                token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days
+                is_active: true,
+            }, {
+                onConflict: 'workspace_id,account_id'
+            })
+
+            if (dbError) throw dbError
+
+            return NextResponse.redirect(new URL('/settings?success=connected', request.url))
+        }
     } catch (error) {
         console.error('OAuth callback error:', error)
         return NextResponse.redirect(new URL('/settings?error=connection_failed', request.url))

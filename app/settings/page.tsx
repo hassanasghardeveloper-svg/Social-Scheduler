@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import ConnectInstagramButton from '@/components/ConnectInstagramButton'
+import ConnectFacebookButton from '@/components/ConnectFacebookButton'
 import DemoAccountButton from '@/components/DemoAccountButton'
 import ConnectedAccounts from '@/components/ConnectedAccounts'
 import DashboardLayout from '@/components/DashboardLayout'
@@ -101,12 +102,13 @@ export default async function SettingsPage({
                                 Connected Accounts
                             </h2>
                             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                Connect your Instagram account to start posting
+                                Connect your social media accounts to start posting
                             </p>
                         </div>
                         <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
                             <DemoAccountButton workspaceId={currentWorkspace?.id || 'default'} />
                             <ConnectInstagramButton workspaceId={currentWorkspace?.id || 'default'} />
+                            <ConnectFacebookButton workspaceId={currentWorkspace?.id || 'default'} />
                         </div>
                     </div>
 

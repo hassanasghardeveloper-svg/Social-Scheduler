@@ -16,7 +16,7 @@ This document tracks the completion of features and milestones for the Social Me
 | **Phase 5** | Dashboard & Polish | ✅ Done | 2026-01-19 | Premium UI, Preview, and Calendar |
 | **Phase 6** | Auto-Posting Engine | ✅ Done | 2026-01-19 | Edge Functions + Instagram API |
 | **Phase 7** | Testing (Instagram) | 🟡 In Progress | - | End-to-end validation |
-| **Phase 8** | Facebook Integration | ⚪ Pending | - | Expand to FB after IG validation |
+| **Phase 8** | Facebook Integration | 🟡 In Progress | - | FB Page connection ready |
 
 ---
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { Instagram, Trash2 } from 'lucide-react'
+import { Instagram, Facebook, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
@@ -36,6 +36,25 @@ export default function ConnectedAccounts({ accounts }: { accounts: SocialAccoun
         }
     }
 
+    const getPlatformIcon = (platform: string) => {
+        if (platform === 'facebook') {
+            return (
+                <div className="w-12 h-12 rounded-full bg-[#1877F2] flex items-center justify-center text-white">
+                    <Facebook size={24} />
+                </div>
+            )
+        }
+        return (
+            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white">
+                <Instagram size={24} />
+            </div>
+        )
+    }
+
+    const getPlatformLabel = (platform: string) => {
+        return platform === 'facebook' ? 'Facebook Page' : 'Instagram Account'
+    }
+
     return (
         <div className="space-y-3">
             {accounts.map((account) => (
@@ -55,13 +74,11 @@ export default function ConnectedAccounts({ accounts }: { accounts: SocialAccoun
                                 />
                             </div>
                         ) : (
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white">
-                                <Instagram size={24} />
-                            </div>
+                            getPlatformIcon(account.platform)
                         )}
                         <div>
                             <p className="font-medium text-gray-900 dark:text-white">
-                                {account.account_name || 'Instagram Account'}
+                                {account.account_name || getPlatformLabel(account.platform)}
                             </p>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
                                 Connected {new Date(account.created_at).toLocaleDateString()}
