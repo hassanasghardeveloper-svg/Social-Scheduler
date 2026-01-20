@@ -98,7 +98,11 @@ CREATE POLICY "Users can view their own workspaces"
     ON workspaces FOR SELECT
     USING (
         owner_id = auth.uid() OR
-        id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid())
+        EXISTS (
+            SELECT 1 FROM workspace_members 
+            WHERE workspace_id = workspaces.id 
+            AND user_id = auth.uid()
+        )
     );
 
 CREATE POLICY "Users can create workspaces"
@@ -117,10 +121,11 @@ CREATE POLICY "Workspace owners can delete their workspaces"
 CREATE POLICY "Users can view workspace members"
     ON workspace_members FOR SELECT
     USING (
-        workspace_id IN (
-            SELECT id FROM workspaces WHERE owner_id = auth.uid()
-            UNION
-            SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()
+        user_id = auth.uid() OR
+        EXISTS (
+            SELECT 1 FROM workspaces 
+            WHERE id = workspace_members.workspace_id 
+            AND owner_id = auth.uid()
         )
     );
 
@@ -138,20 +143,31 @@ CREATE POLICY "Workspace admins can manage members"
 CREATE POLICY "Users can view social accounts in their workspaces"
     ON social_accounts FOR SELECT
     USING (
-        workspace_id IN (
-            SELECT id FROM workspaces WHERE owner_id = auth.uid()
-            UNION
-            SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()
+        EXISTS (
+            SELECT 1 FROM workspaces 
+            WHERE id = social_accounts.workspace_id 
+            AND owner_id = auth.uid()
+        ) OR
+        EXISTS (
+            SELECT 1 FROM workspace_members 
+            WHERE workspace_id = social_accounts.workspace_id 
+            AND user_id = auth.uid()
         )
     );
 
 CREATE POLICY "Workspace admins can manage social accounts"
     ON social_accounts FOR ALL
     USING (
-        workspace_id IN (
-            SELECT id FROM workspaces WHERE owner_id = auth.uid()
-            UNION
-            SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid() AND role = 'admin'
+        EXISTS (
+            SELECT 1 FROM workspaces 
+            WHERE id = social_accounts.workspace_id 
+            AND owner_id = auth.uid()
+        ) OR
+        EXISTS (
+            SELECT 1 FROM workspace_members 
+            WHERE workspace_id = social_accounts.workspace_id 
+            AND user_id = auth.uid() 
+            AND role = 'admin'
         )
     );
 
