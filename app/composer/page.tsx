@@ -6,8 +6,10 @@ import DashboardLayout from '@/components/DashboardLayout'
 export default async function ComposerPage({
     searchParams
 }: {
-    searchParams: { postId?: string }
+    searchParams: Promise<{ postId?: string }>
 }) {
+    const resolvedParams = await searchParams
+    const postId = resolvedParams.postId
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -51,11 +53,11 @@ export default async function ComposerPage({
 
     // Check for edit mode
     let initialPost = null
-    if (searchParams.postId) {
+    if (postId) {
         const { data: post } = await supabase
             .from('posts')
             .select('*, media_assets(*)')
-            .eq('id', searchParams.postId)
+            .eq('id', postId)
             .eq('workspace_id', workspace.id)
             .single()
 
