@@ -164,15 +164,16 @@ export default async function DashboardPage() {
                             <div className="p-2">
                                 {recentPosts && recentPosts.length > 0 ? (
                                     recentPosts.map(post => (
-                                        <div
+                                        <Link
                                             key={post.id}
-                                            className="flex items-center p-4 hover:bg-gray-50 dark:hover:bg-gray-900/50 rounded-xl transition-colors gap-4"
+                                            href={`/composer?postId=${post.id}`}
+                                            className="flex items-center p-4 hover:bg-gray-50 dark:hover:bg-gray-900/50 rounded-xl transition-colors gap-4 group cursor-pointer"
                                         >
-                                            <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden shrink-0">
+                                            <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden shrink-0 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-colors">
                                                 {post.caption?.slice(0, 1) || 'P'}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-blue-600 transition-colors">
                                                     {post.caption}
                                                 </p>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
@@ -186,7 +187,7 @@ export default async function DashboardPage() {
                                                 }`}>
                                                 {post.status}
                                             </span>
-                                        </div>
+                                        </Link>
                                     ))
                                 ) : (
                                     <div className="p-8 text-center">

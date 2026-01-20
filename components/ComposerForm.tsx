@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
-import { Upload, X, Loader2, Sparkles, Calendar, Send, Heart, MessageCircle, Bookmark, Instagram, AlertCircle } from 'lucide-react'
+import { Upload, X, Loader2, Sparkles, Calendar, Send, Heart, MessageCircle, Bookmark, Instagram, AlertCircle, Trash2 } from 'lucide-react'
 
 type SocialAccount = {
     id: string
@@ -307,6 +307,35 @@ export default function ComposerForm({
         }
     }
 
+    const handleDeletePost = async () => {
+        if (!initialPost) return
+
+        if (!confirm('Are you sure you want to delete this scheduled post? This cannot be undone.')) {
+            return
+        }
+
+        setLoading(true)
+        try {
+            const supabase = createClient()
+
+            const { error } = await supabase
+                .from('posts')
+                .delete()
+                .eq('id', initialPost.id)
+                .eq('workspace_id', workspaceId)
+
+            if (error) throw error
+
+            alert('Post deleted successfully!')
+            window.location.href = '/calendar'
+        } catch (error: any) {
+            console.error('Delete error:', error)
+            alert('Error: ' + error.message)
+        } finally {
+            setLoading(false)
+        }
+    }
+
     return (
         <div className="grid lg:grid-cols-3 gap-8">
             {/* Left: Content Input & Media */}
@@ -382,64 +411,68 @@ export default function ComposerForm({
 
             {/* Middle: AI Content & Scheduling */}
             <div className="lg:col-span-1 space-y-6">
-                {aiGeneration && (
+                {(aiGeneration || initialPost) && (
                     <>
                         {/* AI Generated Content */}
                         <div className="bg-white dark:bg-gray-950 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
                             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                 <Sparkles size={20} className="text-blue-600" />
-                                AI Generated Content
+                                {aiGeneration ? 'AI Generated Content' : 'Edit Caption'}
                             </h2>
 
                             <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-                                        Choose Hook
-                                    </label>
-                                    <select
-                                        value={selectedHook}
-                                        onChange={(e) => {
-                                            setSelectedHook(e.target.value)
-                                            if (aiGeneration) {
-                                                setCaption(e.target.value + '\n\n' + selectedCaption + '\n\n' + aiGeneration.hashtags.join(' '))
-                                            }
-                                        }}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                                    >
-                                        {aiGeneration.hooks.map((hook: string, i: number) => (
-                                            <option key={i} value={hook}>{hook}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-                                        Caption Length
-                                    </label>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        {(['short', 'medium', 'long'] as const).map((length) => (
-                                            <button
-                                                key={length}
-                                                onClick={() => {
+                                {aiGeneration && (
+                                    <>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+                                                Choose Hook
+                                            </label>
+                                            <select
+                                                value={selectedHook}
+                                                onChange={(e) => {
+                                                    setSelectedHook(e.target.value)
                                                     if (aiGeneration) {
-                                                        setSelectedCaption(aiGeneration.captions[length])
-                                                        setCaption(selectedHook + '\n\n' + aiGeneration.captions[length] + '\n\n' + aiGeneration.hashtags.join(' '))
+                                                        setCaption(e.target.value + '\n\n' + selectedCaption + '\n\n' + aiGeneration.hashtags.join(' '))
                                                     }
                                                 }}
-                                                className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${aiGeneration && selectedCaption === aiGeneration.captions[length]
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
-                                                    }`}
+                                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                                             >
-                                                {length.charAt(0).toUpperCase() + length.slice(1)}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
+                                                {aiGeneration.hooks.map((hook: string, i: number) => (
+                                                    <option key={i} value={hook}>{hook}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+                                                Caption Length
+                                            </label>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                {(['short', 'medium', 'long'] as const).map((length) => (
+                                                    <button
+                                                        key={length}
+                                                        onClick={() => {
+                                                            if (aiGeneration) {
+                                                                setSelectedCaption(aiGeneration.captions[length])
+                                                                setCaption(selectedHook + '\n\n' + aiGeneration.captions[length] + '\n\n' + aiGeneration.hashtags.join(' '))
+                                                            }
+                                                        }}
+                                                        className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${aiGeneration && selectedCaption === aiGeneration.captions[length]
+                                                            ? 'bg-blue-600 text-white'
+                                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
+                                                            }`}
+                                                    >
+                                                        {length.charAt(0).toUpperCase() + length.slice(1)}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-                                        Edit Caption
+                                        {aiGeneration ? 'Edit Caption' : 'Caption'}
                                     </label>
                                     <textarea
                                         value={caption}
@@ -450,6 +483,7 @@ export default function ComposerForm({
                                 </div>
                             </div>
                         </div>
+
 
                         {/* Scheduling */}
                         <div className="bg-white dark:bg-gray-950 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
@@ -502,7 +536,17 @@ export default function ComposerForm({
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className={`grid gap-3 ${initialPost ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                                    {initialPost && (
+                                        <button
+                                            onClick={handleDeletePost}
+                                            disabled={loading}
+                                            className="w-full flex items-center justify-center gap-2 py-3 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/40 transition-colors font-medium disabled:opacity-50"
+                                        >
+                                            <Trash2 size={18} />
+                                            {loading ? '...' : 'Delete'}
+                                        </button>
+                                    )}
                                     <button
                                         onClick={handlePublishNow}
                                         disabled={loading}
@@ -517,7 +561,7 @@ export default function ComposerForm({
                                         className="w-full flex items-center justify-center gap-2 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
                                     >
                                         <Calendar size={18} />
-                                        {loading ? '...' : (initialPost ? 'Update Schedule' : 'Schedule')}
+                                        {loading ? '...' : (initialPost ? 'Update' : 'Schedule')}
                                     </button>
                                 </div>
                             </div>
