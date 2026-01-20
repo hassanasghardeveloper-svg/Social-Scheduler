@@ -3,7 +3,11 @@ import { createClient } from '@/lib/supabase/server'
 import ComposerForm from '@/components/ComposerForm'
 import DashboardLayout from '@/components/DashboardLayout'
 
-export default async function ComposerPage() {
+export default async function ComposerPage({
+    searchParams
+}: {
+    searchParams: { postId?: string }
+}) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -45,6 +49,21 @@ export default async function ComposerPage() {
         .eq('workspace_id', workspace.id)
         .eq('is_active', true)
 
+    // Check for edit mode
+    let initialPost = null
+    if (searchParams.postId) {
+        const { data: post } = await supabase
+            .from('posts')
+            .select('*, media_assets(*)')
+            .eq('id', searchParams.postId)
+            .eq('workspace_id', workspace.id)
+            .single()
+
+        if (post) {
+            initialPost = post
+        }
+    }
+
     return (
         <DashboardLayout currentPage="composer">
             <div className="max-w-6xl mx-auto">
@@ -56,6 +75,7 @@ export default async function ComposerPage() {
                     <ComposerForm
                         workspaceId={workspace.id}
                         socialAccounts={socialAccounts}
+                        initialPost={initialPost}
                     />
                 ) : (
                     <div className="bg-white dark:bg-gray-950 rounded-xl border border-gray-200 dark:border-gray-800 p-12 text-center shadow-sm">

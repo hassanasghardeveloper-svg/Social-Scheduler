@@ -24,25 +24,33 @@ type AIGeneration = {
 
 export default function ComposerForm({
     workspaceId,
-    socialAccounts
+    socialAccounts,
+    initialPost
 }: {
     workspaceId: string
     socialAccounts: SocialAccount[]
+    initialPost?: any
 }) {
-    const [userInput, setUserInput] = useState<string>('')
+    const [userInput, setUserInput] = useState<string>(initialPost?.caption || '')
     const [aiGeneration, setAiGeneration] = useState<AIGeneration | null>(null)
     const [selectedHook, setSelectedHook] = useState<string>('')
     const [selectedCaption, setSelectedCaption] = useState<string>('')
-    const [caption, setCaption] = useState<string>('')
-    const [selectedAccount, setSelectedAccount] = useState<string>(socialAccounts[0]?.id || '')
-    const [scheduledDate, setScheduledDate] = useState<string>('')
-    const [scheduledTime, setScheduledTime] = useState<string>('')
+    const [caption, setCaption] = useState<string>(initialPost?.caption || '')
+    const [selectedAccount, setSelectedAccount] = useState<string>(
+        initialPost?.social_account_id || socialAccounts[0]?.id || ''
+    )
+    const [scheduledDate, setScheduledDate] = useState<string>(
+        initialPost?.scheduled_at ? new Date(initialPost.scheduled_at).toISOString().split('T')[0] : ''
+    )
+    const [scheduledTime, setScheduledTime] = useState<string>(
+        initialPost?.scheduled_at ? new Date(initialPost.scheduled_at).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : ''
+    )
     const [loading, setLoading] = useState<boolean>(false)
     const [uploading, setUploading] = useState<boolean>(false)
-    const [step, setStep] = useState<number>(1)
+    const [step, setStep] = useState<number>(initialPost ? 2 : 1)
     const [mediaFile, setMediaFile] = useState<File | null>(null)
-    const [mediaPreview, setMediaPreview] = useState<string | null>(null)
-    const [mediaId, setMediaId] = useState<string | null>(null)
+    const [mediaPreview, setMediaPreview] = useState<string | null>(initialPost?.media_assets?.url || null)
+    const [mediaId, setMediaId] = useState<string | null>(initialPost?.media_id || null)
     const searchParams = useSearchParams()
 
     useEffect(() => {
@@ -257,6 +265,48 @@ export default function ComposerForm({
         }
     }
 
+    const handleUpdatePost = async () => {
+        if (!scheduledDate || !scheduledTime) {
+            alert('Please select date and time')
+            return
+        }
+
+        setLoading(true)
+        try {
+            let currentMediaId = mediaId
+            if (!currentMediaId && mediaFile) {
+                currentMediaId = await uploadMedia(mediaFile)
+            }
+
+            if (!currentMediaId) throw new Error('Media upload failed')
+
+            const scheduledAt = new Date(`${scheduledDate}T${scheduledTime}`)
+            const supabase = createClient()
+
+            const { error } = await supabase
+                .from('posts')
+                .update({
+                    social_account_id: selectedAccount,
+                    caption,
+                    scheduled_at: scheduledAt.toISOString(),
+                    media_id: currentMediaId,
+                    status: 'scheduled'
+                })
+                .eq('id', initialPost.id)
+                .eq('workspace_id', workspaceId)
+
+            if (error) throw error
+
+            alert('Post updated successfully!')
+            window.location.href = '/calendar'
+        } catch (error: any) {
+            console.error('Update error:', error)
+            alert('Error: ' + error.message)
+        } finally {
+            setLoading(false)
+        }
+    }
+
     return (
         <div className="grid lg:grid-cols-3 gap-8">
             {/* Left: Content Input & Media */}
@@ -462,12 +512,12 @@ export default function ComposerForm({
                                         {loading ? '...' : 'Publish Now'}
                                     </button>
                                     <button
-                                        onClick={handleSchedulePost}
+                                        onClick={initialPost ? handleUpdatePost : handleSchedulePost}
                                         disabled={loading || !scheduledDate || !scheduledTime}
                                         className="w-full flex items-center justify-center gap-2 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
                                     >
                                         <Calendar size={18} />
-                                        {loading ? '...' : 'Schedule'}
+                                        {loading ? '...' : (initialPost ? 'Update Schedule' : 'Schedule')}
                                     </button>
                                 </div>
                             </div>

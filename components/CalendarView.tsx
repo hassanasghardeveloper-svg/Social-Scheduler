@@ -140,7 +140,11 @@ export default function CalendarView({ posts }: { posts: Post[] }) {
                                 {dayPosts.slice(0, 2).map(post => (
                                     <div
                                         key={post.id}
-                                        className="flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded px-1 py-0.5"
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            router.push(`/composer?postId=${post.id}`)
+                                        }}
+                                        className="flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded px-1 py-0.5 hover:ring-1 hover:ring-blue-500 transition-all"
                                         title={post.caption}
                                     >
                                         {getStatusIcon(post.status)}
