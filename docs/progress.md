@@ -37,7 +37,9 @@ This document tracks the completion of features and milestones for the Social Me
 - ✅ Fixed "Infinite Recursion" error in Supabase RLS
 - ✅ Resolved Cron Job schedule issue (every minute)
 - ✅ Implemented "Edit Post" feature
+- ✅ Added "Delete Post" functionality with confirmation
 - ✅ Fixed Next.js 15 `searchParams` build error
+- ✅ Updated Git configuration for correct commit attribution
 
 ### 2026-01-18: Final Plan Created
 - ✅ Established Instagram-first validation strategy
