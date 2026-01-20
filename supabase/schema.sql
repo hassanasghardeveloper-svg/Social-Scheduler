@@ -240,3 +240,48 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- STORAGE POLICIES
+-- Ensure the 'media' bucket exists and is public
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('media', 'media', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Enable RLS on objects (it usually is, but good to ensure)
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+
+-- Allow users to upload to folders named after their workspace ID
+CREATE POLICY "Users can upload media to their workspace"
+ON storage.objects FOR INSERT
+WITH CHECK (
+    bucket_id = 'media' AND
+    auth.role() = 'authenticated' AND
+    public.check_is_workspace_member( (SPLIT_PART(name, '/', 1))::uuid )
+);
+
+-- Allow users to view media in their workspace (and public access)
+CREATE POLICY "Users can view media in their workspace"
+ON storage.objects FOR SELECT
+USING (
+    bucket_id = 'media'
+    -- Since it's public, we technically don't need restricted SELECT, 
+    -- but this helps if we ever make it private.
+    -- For now, just allow bucket access.
+);
+
+-- Allow users to update/delete their media
+CREATE POLICY "Users can update their media"
+ON storage.objects FOR UPDATE
+USING (
+    bucket_id = 'media' AND
+    auth.role() = 'authenticated' AND
+    public.check_is_workspace_member( (SPLIT_PART(name, '/', 1))::uuid )
+);
+
+CREATE POLICY "Users can delete their media"
+ON storage.objects FOR DELETE
+USING (
+    bucket_id = 'media' AND
+    auth.role() = 'authenticated' AND
+    public.check_is_workspace_member( (SPLIT_PART(name, '/', 1))::uuid )
+);
