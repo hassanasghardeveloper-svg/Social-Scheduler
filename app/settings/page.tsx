@@ -14,6 +14,7 @@ export default async function SettingsPage({
 }) {
     const params = await searchParams
     const error = params.error as string
+    const details = params.details as string
     const success = params.success as string
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -58,15 +59,24 @@ export default async function SettingsPage({
                 </h1>
 
                 {error && (
-                    <div className="mb-6 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 flex items-center gap-3 text-red-800 dark:text-red-200">
-                        <AlertCircle size={20} />
-                        <p className="text-sm font-medium">
-                            {error === 'no_pages' && 'No Facebook Pages found. You need a Facebook Page to connect Instagram.'}
-                            {error === 'no_instagram' && 'No Instagram Professional account linked to this Facebook Page.'}
-                            {error === 'oauth_denied' && 'Connection cancelled or denied.'}
-                            {error === 'connection_failed' && 'Failed to connect. Please try again.'}
-                            {!['no_pages', 'no_instagram', 'oauth_denied', 'connection_failed'].includes(error) && 'An unexpected error occurred.'}
-                        </p>
+                    <div className="mb-6 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 flex flex-col gap-2 text-red-800 dark:text-red-200">
+                        <div className="flex items-center gap-3">
+                            <AlertCircle size={20} />
+                            <p className="text-sm font-medium">
+                                {error === 'no_pages' && 'No Facebook Pages found. You need a Facebook Page to connect Instagram.'}
+                                {error === 'no_instagram' && 'No Instagram Professional account linked to this Facebook Page.'}
+                                {error === 'oauth_denied' && 'Connection cancelled or denied.'}
+                                {error === 'connection_failed' && 'Failed to connect. Please try again.'}
+                                {error === 'config_error' && 'Environment configuration error. Check META_APP_ID and META_APP_SECRET.'}
+                                {error === 'invalid_state' && 'Invalid session state. Please try again.'}
+                                {!['no_pages', 'no_instagram', 'oauth_denied', 'connection_failed', 'config_error', 'invalid_state'].includes(error) && 'An unexpected error occurred.'}
+                            </p>
+                        </div>
+                        {details && (
+                            <p className="text-xs opacity-80 ml-8 font-mono break-all">
+                                Error details: {details}
+                            </p>
+                        )}
                     </div>
                 )}
 

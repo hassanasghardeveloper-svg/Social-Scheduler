@@ -16,45 +16,66 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        const { workspaceId, platform } = JSON.parse(atob(state))
-        const targetPlatform = platform || 'instagram' // Default to instagram for backward compatibility
+        let decodedState;
+        try {
+            decodedState = JSON.parse(atob(state))
+        } catch (e) {
+            console.error('Failed to decode state:', state)
+            return NextResponse.redirect(new URL('/settings?error=invalid_state', request.url))
+        }
+
+        const { workspaceId, platform } = decodedState
+        const targetPlatform = platform || 'instagram'
 
         // Exchange code for access_token
         const redirectUri = `${request.nextUrl.origin}/api/auth/callback/meta`
 
-        const tokenResponse = await fetch('https://graph.facebook.com/v21.0/oauth/access_token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                client_id: process.env.META_APP_ID,
-                client_secret: process.env.META_APP_SECRET,
-                redirect_uri: redirectUri,
-                code,
-            }),
-        })
-
-        const tokenData = await tokenResponse.json()
-
-        if (!tokenData.access_token) {
-            throw new Error('No access token received')
+        if (!process.env.META_APP_ID || !process.env.META_APP_SECRET) {
+            console.error('Missing Meta App credentials in environment variables')
+            return NextResponse.redirect(new URL('/settings?error=config_error', request.url))
         }
 
-        // Exchange short-lived token for long-lived token
-        const longLivedResponse = await fetch(
-            `https://graph.facebook.com/v21.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${process.env.META_APP_ID}&client_secret=${process.env.META_APP_SECRET}&fb_exchange_token=${tokenData.access_token}`
-        )
+        const tokenUrl = new URL('https://graph.facebook.com/v21.0/oauth/access_token')
+        tokenUrl.searchParams.set('client_id', process.env.META_APP_ID)
+        tokenUrl.searchParams.set('client_secret', process.env.META_APP_SECRET)
+        tokenUrl.searchParams.set('redirect_uri', redirectUri)
+        tokenUrl.searchParams.set('code', code)
 
+        const tokenResponse = await fetch(tokenUrl.toString())
+        const tokenData = await tokenResponse.json()
+
+        if (!tokenResponse.ok || !tokenData.access_token) {
+            console.error('Token exchange failed:', tokenData)
+            throw new Error(tokenData.error?.message || 'No access token received')
+        }
+
+        const accessToken = tokenData.access_token
+
+        // Exchange short-lived token for long-lived token
+        const longLivedUrl = new URL('https://graph.facebook.com/v21.0/oauth/access_token')
+        longLivedUrl.searchParams.set('grant_type', 'fb_exchange_token')
+        longLivedUrl.searchParams.set('client_id', process.env.META_APP_ID)
+        longLivedUrl.searchParams.set('client_secret', process.env.META_APP_SECRET)
+        longLivedUrl.searchParams.set('fb_exchange_token', accessToken)
+
+        const longLivedResponse = await fetch(longLivedUrl.toString())
         const longLivedData = await longLivedResponse.json()
-        const accessToken = longLivedData.access_token || tokenData.access_token
+
+        const finalAccessToken = longLivedData.access_token || accessToken
 
         // Get user's Facebook Pages
         const accountsResponse = await fetch(
-            `https://graph.facebook.com/v21.0/me/accounts?access_token=${accessToken}`
+            `https://graph.facebook.com/v21.0/me/accounts?access_token=${finalAccessToken}`
         )
 
         const accountsData = await accountsResponse.json()
 
-        if (!accountsData.data || accountsData.data.length === 0) {
+        if (!accountsResponse.ok || !accountsData.data) {
+            console.error('Failed to fetch Facebook accounts:', accountsData)
+            throw new Error(accountsData.error?.message || 'Failed to fetch Facebook accounts')
+        }
+
+        if (accountsData.data.length === 0) {
             return NextResponse.redirect(new URL('/settings?error=no_pages', request.url))
         }
 
@@ -93,14 +114,15 @@ export async function GET(request: NextRequest) {
 
             return NextResponse.redirect(new URL('/settings?success=connected', request.url))
         } else {
-            // Connect Instagram account (original logic)
+            // Connect Instagram account
             const igResponse = await fetch(
                 `https://graph.facebook.com/v21.0/${pageId}?fields=instagram_business_account&access_token=${pageAccessToken}`
             )
 
             const igData = await igResponse.json()
 
-            if (!igData.instagram_business_account) {
+            if (!igResponse.ok || !igData.instagram_business_account) {
+                console.error('Failed to fetch Instagram account:', igData)
                 return NextResponse.redirect(new URL('/settings?error=no_instagram', request.url))
             }
 
@@ -133,6 +155,7 @@ export async function GET(request: NextRequest) {
         }
     } catch (error) {
         console.error('OAuth callback error:', error)
-        return NextResponse.redirect(new URL('/settings?error=connection_failed', request.url))
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        return NextResponse.redirect(new URL(`/settings?error=connection_failed&details=${encodeURIComponent(errorMessage)}`, request.url))
     }
 }
